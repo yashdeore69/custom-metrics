@@ -1,0 +1,310 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+
+## Day 1: Data Model & API Foundation (Estimated: 6–8 hours)
+
+### Phase 1.1: Setup & Initialization (1 hour)
+
+* **Task 1.1.1: Repository & Git**
+
+  * Initialize `git init` in project root.
+  * Create `.gitignore` (/node\_modules, /.env, /client/node\_modules).
+  * Add `README.md` with project title and placeholder sections.
+  * Commit: “chore: initialize repo with gitignore and README.”
+* **Task 1.1.2: Environment Variables**
+
+  * Create `.env.example` listing `PORT=5000`, `MONGO_URI=your_uri_here`, `JWT_SECRET=change_me`.
+  * Install `dotenv` and configure at top of `server.js` to load `.env`.
+  * Commit: “chore: add dotenv and example env file.”
+
+### Phase 1.2: Dependencies & Folder Structure (1 hour)
+
+* **Task 1.2.1: Backend Package Setup**
+
+  * Run `npm init -y`, install `express`, `mongoose`, `cors`, `dotenv`.
+  * Validate in `package.json` that dependencies are present.
+* **Task 1.2.2: Create Folders**
+
+  * Structure: `/models`, `/controllers`, `/routes`, `/middleware`, `/config`, `/utils`.
+  * Create empty `index.js` files for clarity.
+  * Commit: “chore: install dependencies and scaffold folder structure.”
+
+### Phase 1.3: Metric Schema Definition (2 hours)
+
+* **Task 1.3.1: Write Metric Model**
+
+  * File: `models/Metric.js`:
+
+    ```js
+    const mongoose = require('mongoose');
+    const MetricSchema = new mongoose.Schema({
+      name: { type: String, required: true, trim: true },
+      description: { type: String, default: '', maxlength: 250 },
+      calculationType: { type: String, enum: ['count','percentage','time'], required: true },
+      formula: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now }
+    });
+    module.exports = mongoose.model('Metric', MetricSchema);
+    ```
+* **Task 1.3.2: Schema Validation Tests**
+
+  * In `/utils/validateModel.js`, write a function to instantiate a `Metric` with missing fields and log validation errors.
+  * Run via `node utils/validateModel.js` to confirm errors.
+  * Commit: “feat: add Metric schema with validation tests.”
+
+### Phase 1.4: CRUD API Endpoints (2–3 hours)
+
+* **Task 1.4.1: Controller Stubs**
+
+  * File: `controllers/metricController.js` with empty exports: `getAll, create, update, remove`.
+* **Task 1.4.2: Implement GET /metrics**
+
+  * Fetch all metrics sorted by `createdAt` descending.
+  * Return JSON `{ success: true, data: metrics }`.
+* **Task 1.4.3: Implement POST /metrics**
+
+  * Accept JSON body, construct new `Metric`, save, return saved doc.
+  * Handle errors: catch validation errors, return `400` with error details.
+* **Task 1.4.4: Implement PUT & DELETE**
+
+  * `PUT /metrics/:id`: findByIdAndUpdate, return `{ success: true, data: updatedMetric }`.
+  * `DELETE /metrics/:id`: findByIdAndRemove, return `{ success: true, message: 'Deleted' }`.
+* **Task 1.4.5: Route Wiring**
+
+  * File: `routes/metrics.js`, import controller, map HTTP verbs.
+  * In `server.js`, add `app.use('/api/metrics', require('./routes/metrics'));`.
+* **Task 1.4.6: Sanity Testing**
+
+  * Use Postman to test each endpoint, document sample requests/responses in `README.md`.
+  * Commit: “feat: complete CRUD API for Metric model.”
+
+---
+
+## Day 2: Frontend CRUD Interface (Estimated: 6–8 hours)
+
+### Phase 2.1: React App Bootstrapping (1 hour)
+
+* **Task 2.1.1: Scaffold Client**
+
+  * In `/client`, run `npm create vite@latest . --template react` (or `create-react-app`).
+  * Initialize Git or add to root .gitignore.
+* **Task 2.1.2: Tailwind & Axios Setup**
+
+  * Install `axios`, `tailwindcss`, `postcss`, `autoprefixer`.
+  * Configure Tailwind via `npx tailwindcss init -p`; add paths in `tailwind.config.js`.
+  * Commit: “chore: scaffold React client with Tailwind & Axios.”
+
+### Phase 2.2: MetricsPage & Data Fetch (2 hours)
+
+* **Task 2.2.1: Create MetricsPage.jsx**
+
+  * Location: `/client/src/pages/MetricsPage.jsx`.
+  * Use `useEffect` to `axios.get('/api/metrics')`; store in `metrics` state.
+  * Display loading spinner while fetching.
+* **Task 2.2.2: List UI**
+
+  * Map `metrics` to `<Card>` components showing `name` (bold), `calculationType` (badge).
+  * Use Tailwind: `p-4, m-2, shadow-md, rounded-lg`.
+* **Task 2.2.3: Error Handling**
+
+  * If fetch fails, show an error banner: “Failed to load metrics. Retry.”
+  * Add a “Retry” button that re-invokes the fetch.
+  * Commit: “feat: implement MetricsPage with fetch, list UI, and error handling.”
+
+### Phase 2.3: New Metric Form (2–3 hours)
+
+* **Task 2.3.1: MetricForm.jsx Boilerplate**
+
+  * In `/client/src/components`, create `MetricForm.jsx`.
+  * Four inputs: `name (text)`, `description (textarea)`, `calculationType (select)`, `formula (text)`.
+* **Task 2.3.2: Controlled Inputs & Validation**
+
+  * Use `useState` for each field.
+  * Disable submit if `name` or `formula` empty; show inline helper text.
+* **Task 2.3.3: Submit Handler**
+
+  * On submit, POST to `/api/metrics`; show loader on button.
+  * On success: clear fields, emit event or callback to parent to refresh list.
+  * On error: show inline message under form.
+* **Task 2.3.4: Layout & Styling**
+
+  * Use consistent spacing: `space-y-4`, labels bold, inputs `border rounded p-2`.
+  * Commit: “feat: build MetricForm with validation and POST integration.”
+
+---
+
+## Day 3: Full CRUD in UI & State Management (Estimated: 5–7 hours)
+
+### Phase 3.1: Edit & Delete Workflows (3 hours)
+
+* **Task 3.1.1: Edit Mode Toggle**
+
+  * Add edit icon button on each card; on click, open form modal prefilled with metric data.
+  * Create a `Modal.jsx` component in `/components/common`.
+* **Task 3.1.2: Update Handler**
+
+  * On form submit in edit mode, send `PUT /api/metrics/:id`; show inline saving indicator.
+* **Task 3.1.3: Delete Confirmation**
+
+  * Add trash icon; on click, `window.confirm('...')`. If confirmed, call `DELETE /api/metrics/:id`.
+  * Show toast message “Metric deleted” or “Delete failed”.
+* **Task 3.1.4: Refresh State**
+
+  * Use optimistic update: remove or update the metric in state immediately, rollback on error.
+  * Commit: “feat: complete edit/delete CRUD flows with modals and confirmations.”
+
+### Phase 3.2: UX States & Feedback (2 hours)
+
+* **Task 3.2.1: Loading Skeletons**
+
+  * Show grey skeleton cards while metrics load (e.g., animated `bg-gray-200` blocks).
+* **Task 3.2.2: Success/Error Toasts**
+
+  * Create `Toast.jsx` in common components. Support success (green) and error (red) variants with auto-dismiss.
+  * Use for all CRUD operations.
+* **Task 3.2.3: Accessibility Basics**
+
+  * Add `aria-label` to buttons.
+  * Ensure form labels are linked via `htmlFor` and `id`.
+  * Commit: “chore: add UX feedback components and basic accessibility.”
+
+---
+
+## Day 4: Formula Parsing, Preview & Sample Inputs (Estimated: 4–6 hours)
+
+### Phase 4.1: MathJS & Parser Setup (1 hour)
+
+* **Task 4.1.1: Install & Import**
+
+  * `npm install mathjs` in client.
+  * Create `/utils/evaluator.js`:
+
+    ```js
+    import { evaluate } from 'mathjs';
+    export const compute = (expr, variables) => {
+      const scope = variables;
+      return evaluate(expr, scope);
+    };
+    ```
+  * Commit: “feat: add formula evaluator util using mathjs.”
+
+### Phase 4.2: FormulaPreview Component (2–3 hours)
+
+* **Task 4.2.1: Component Structure**
+
+  * In `/client/src/components`, create `FormulaPreview.jsx` accepting props: `formula` (string), `sampleVars` (object).
+* **Task 4.2.2: Dynamic Preview**
+
+  * On `formula` or `sampleVars` change, call `compute()`; handle errors with try/catch.
+  * Display result in styled box: “Preview with X=10, Y=5 → 15”.
+* **Task 4.2.3: Integrate into MetricForm**
+
+  * Place below formula input. Provide controls to adjust sampleVars (optional bonus).
+  * Commit: “feat: implement live formula preview in MetricForm.”
+
+---
+
+## Day 5: Authentication Stub & Security (Estimated: 3–4 hours)
+
+### Phase 5.1: Backend Auth Middleware (1–2 hours)
+
+* **Task 5.1.1: Middleware File**
+
+  * `middleware/auth.js`:
+
+    ```js
+    module.exports = (req, res, next) => {
+      const header = req.headers['authorization'];
+      if (header === 'Bearer CURSORPROTOTYPE') return next();
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    };
+    ```
+  * Commit: “feat: stub JWT auth middleware.”
+* **Task 5.1.2: Protect Routes**
+
+  * In `routes/metrics.js`, apply `auth` middleware to POST, PUT, DELETE only.
+  * Commit: “chore: apply auth to protected endpoints.”
+
+### Phase 5.2: Frontend Token Handling (1–2 hours)
+
+* **Task 5.2.1: Login Simulation**
+
+  * Add `LoginButton.jsx` in `/components/common`: clicking sets `localStorage.token='CURSORPROTOTYPE'`.
+* **Task 5.2.2: Axios Interceptor**
+
+  * In `client/src/utils/axiosConfig.js`, set default header if `localStorage.token` exists.
+  * Import this config on app startup.
+  * Commit: “feat: add login stub and axios auth interceptor.”
+
+---
+
+## Day 6: UX Polishing & Code Hygiene (Estimated: 4–5 hours)
+
+### Phase 6.1: Component Library Cleanup (2–3 hours)
+
+* **Task 6.1.1: Common Components**
+
+  * Ensure `/components/common` contains: `Button.jsx`, `Input.jsx`, `Modal.jsx`, `Toast.jsx`.
+  * Standardize props (`className`, `onClick`, etc.).
+* **Task 6.1.2: Tailwind Config Check**
+
+  * Verify consistent spacing scale across components.
+  * Remove inline styles; use `@apply` in CSS where necessary.
+  * Commit: “chore: unify common components and Tailwind usage.”
+
+### Phase 6.2: Code Quality & Documentation (1–2 hours)
+
+* **Task 6.2.1: Folder & Naming**
+
+  * Confirm clear structure: server/client separation, kebab-case filenames.
+* **Task 6.2.2: Inline Comments & JSDoc**
+
+  * Add JSDoc for key functions (e.g., evaluator, controller methods).
+* **Task 6.2.3: ESLint & Prettier**
+
+  * (Optional) Add basic ESLint config for code consistency. Skip deep lint rules; focus on formatting via Prettier.
+  * Commit: “chore: add minimal code comments and lint/format configs.”
+
+---
+
+## Day 7: Demo Preparation & Documentation (Estimated: 3–4 hours)
+
+### Phase 7.1: Sample Data & Scripts (1 hour)
+
+* **Task 7.1.1: Seed Script**
+
+  * `scripts/seed.js`:
+
+    ```js
+    const mongoose = require('mongoose');
+    const Metric = require('../models/Metric');
+    // connect, insert sample list, exit
+    ```
+  * Add `npm run seed` in `package.json`: `node scripts/seed.js`.
+  * Commit: “feat: add DB seed script and npm alias.”
+
+### Phase 7.2: README & Demo Assets (1–2 hours)
+
+* **Task 7.2.1: README Finalization**
+
+  * Document: setup steps, `npm install`, `npm run seed`, `npm start` for both server and client, login token.
+  * Include GIF or screenshot of metric creation and preview.
+* **Task 7.2.2: Screencast**
+
+  * Record a 2–3 minute Loom or local screencast walkthrough.
+  * Save link or file path in README.
+  * Commit: “docs: update README with instructions and demo assets.”
+
+### Phase 7.3: Cursor Summary & Next Steps (Optional)
+
+* **Task 7.3.1: Architecture Notes**
+
+  * Use Cursor to draft a summary paragraph on repo architecture, key files, and where to extend next (e.g., dynamic variables, real JWT).
+  * Copy output into README or pitch email.
+
+
+> **Strict Rule:** Cursor must complete and pass each task—run code, verify results, commit—before moving to the next. Parallel execution of tasks is not permitted.
