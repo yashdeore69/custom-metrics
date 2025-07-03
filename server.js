@@ -18,6 +18,9 @@ app.get('/', (req, res) => {
   res.send('Custom Metrics API is running!');
 });
 
+// Use the metrics router for all /api/metrics endpoints
+app.use('/api/metrics', require('./routes/metrics'));
+
 // Get port from environment variables or default to 5000
 const PORT = process.env.PORT || 5000;
 
