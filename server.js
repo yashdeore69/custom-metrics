@@ -1,6 +1,9 @@
 // Load environment variables from .env file
 require('dotenv').config();
 
+// Connect to MongoDB
+require('./config')();
+
 // Import required packages
 const express = require('express');
 const cors = require('cors');
@@ -21,8 +24,8 @@ app.get('/', (req, res) => {
 // Use the metrics router for all /api/metrics endpoints
 app.use('/api/metrics', require('./routes/metrics'));
 
-// Get port from environment variables or default to 5000
-const PORT = process.env.PORT || 5000;
+// Get port from environment variables or default to 5050
+const PORT = process.env.PORT || 5050;
 
 // Start the server
 app.listen(PORT, () => {
