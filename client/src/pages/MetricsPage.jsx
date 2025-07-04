@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import MetricForm from '../components/MetricForm';
 
 // MetricsPage: Fetches and displays a list of metrics from the backend API
 const MetricsPage = () => {
@@ -9,6 +10,9 @@ const MetricsPage = () => {
   const [loading, setLoading] = useState(true);
   // State to track error status
   const [error, setError] = useState(null);
+  // State for MetricForm feedback
+  const [formSuccess, setFormSuccess] = useState(false);
+  const [formError, setFormError] = useState(null);
 
   // Function to fetch metrics from the backend API
   const fetchMetrics = () => {
@@ -30,6 +34,21 @@ const MetricsPage = () => {
   useEffect(() => {
     fetchMetrics();
   }, []); // Empty dependency array means this runs once on mount
+
+  // Handler for successful metric add
+  const handleMetricAdded = () => {
+    setFormSuccess(true);
+    setFormError(null);
+    fetchMetrics();
+    setTimeout(() => setFormSuccess(false), 2000);
+  };
+
+  // Handler for metric add error
+  const handleMetricAddError = (msg) => {
+    setFormError(msg);
+    setFormSuccess(false);
+    setTimeout(() => setFormError(null), 2000);
+  };
 
   // Show a loading spinner while fetching data
   if (loading) {
@@ -60,11 +79,18 @@ const MetricsPage = () => {
     );
   }
 
-  // Render the list of metrics as Card components
+  // Render the MetricForm and the list of metrics as Card components
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Metrics</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* MetricForm for adding new metrics; refreshes list on add */}
+      <MetricForm
+        onMetricAdded={handleMetricAdded}
+        onMetricAddError={handleMetricAddError}
+        success={formSuccess}
+        error={formError}
+      />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
         {/* Map each metric to a Card */}
         {metrics.map((metric) => (
           <div
