@@ -5,6 +5,19 @@ import Modal from '../components/common/Modal';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 // MetricsPage: Fetches and displays a list of metrics from the backend API
 // Now includes edit functionality with modal overlay for editing existing metrics
@@ -95,6 +108,29 @@ const MetricsPage = () => {
     setTimeout(() => setEditError(null), 3000);
   };
 
+  // Handler for confirming metric deletion
+  const handleConfirmDelete = async (metric) => {
+    try {
+      console.log('Attempting to delete metric:', metric._id);
+      const response = await axios.delete(`/api/metrics/${metric._id}`, {
+        headers: {
+          'Authorization': 'Bearer CURSORPROTOTYPE',
+        },
+      });
+      console.log('Delete response:', response.data);
+      toast.success('Metric deleted successfully!');
+      fetchMetrics(); // Refresh the list
+    } catch (error) {
+      console.error('Delete error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error response data:', error.response?.data);
+      console.error('Error response status:', error.response?.status);
+      console.error('Error response headers:', error.response?.headers);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete metric. Please try again.';
+      toast.error(errorMessage);
+    }
+  };
+
   // Show a loading spinner while fetching data
   if (loading) {
     return (
@@ -177,15 +213,45 @@ const MetricsPage = () => {
                         <p className="text-gray-500 text-xs font-medium mb-1">Formula</p>
                         <p className="text-gray-700 text-sm font-mono">{metric.formula}</p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditClick(metric)}
-                        aria-label={`Edit ${metric.name}`}
-                        className="w-full"
-                      >
-                        Edit Metric
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleEditClick(metric)}
+                          aria-label={`Edit ${metric.name}`}
+                          className="flex-1"
+                        >
+                          Edit Metric
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              aria-label={`Delete ${metric.name}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="max-w-md border border-gray-300 shadow-lg" style={{ backgroundColor: 'white' }}>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="text-gray-900">Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription className="text-gray-700">
+                                This will permanently delete "{metric.name}". This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="bg-gray-300 hover:bg-gray-400 text-gray-800">Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleConfirmDelete(metric)} 
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

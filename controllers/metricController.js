@@ -62,14 +62,19 @@ exports.update = async (req, res) => {
 // Remove (delete) a metric
 exports.remove = async (req, res) => {
   try {
+    console.log('Delete request for metric ID:', req.params.id);
     const Metric = require('../models/Metric');
-    // Find metric by ID and remove
-    const deletedMetric = await Metric.findByIdAndRemove(req.params.id);
+    // Find metric by ID and delete
+    const deletedMetric = await Metric.findByIdAndDelete(req.params.id);
+    console.log('Delete result:', deletedMetric);
     if (!deletedMetric) {
+      console.log('Metric not found');
       return res.status(404).json({ success: false, message: 'Metric not found' });
     }
+    console.log('Metric deleted successfully');
     res.json({ success: true, message: 'Deleted' });
   } catch (error) {
+    console.error('Delete error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 }; 
