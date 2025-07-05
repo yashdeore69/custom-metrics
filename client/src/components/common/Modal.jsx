@@ -8,6 +8,7 @@
 // - Proper z-index to appear above other content
 
 import React from 'react';
+import { X } from 'lucide-react';
 
 const Modal = ({ isOpen, onClose, children, title = "Edit Metric" }) => {
   // If modal is not open, don't render anything
@@ -25,65 +26,40 @@ const Modal = ({ isOpen, onClose, children, title = "Edit Metric" }) => {
     // Backdrop: covers entire screen with semi-transparent background
     // Clicking the backdrop closes the modal
     <div 
+      className="fixed inset-0 bg-white z-50 flex items-center justify-center"
+      onClick={handleBackdropClick}
       style={{ 
+        backgroundColor: 'white', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999
+        bottom: 0
       }}
-      onClick={handleBackdropClick}
     >
       {/* Modal content: centered white container with shadow and rounded corners */}
-      <div style={{
-        backgroundColor: 'white',
-        padding: '0',
-        borderRadius: '8px',
-        maxWidth: '500px',
-        width: '90%',
-        maxHeight: '90vh',
-        overflow: 'auto',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
-      }}>
+      <div className="bg-white rounded-lg shadow-xl w-[500px] mx-4 z-[9999] border-2 border-gray-300">
         {/* Header: contains title and close button */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '16px 20px',
-          borderBottom: '1px solid #e5e7eb',
-          backgroundColor: '#f9fafb'
-        }}>
-          <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', margin: 0 }}>{title}</h2>
+        <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           {/* Close button: X icon that closes the modal */}
           <button
             onClick={onClose}
-            style={{
-              backgroundColor: 'transparent',
-              color: '#6b7280',
-              border: 'none',
-              padding: '8px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontWeight: 'bold'
-            }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-            onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
             aria-label="Close modal"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
         </div>
         
         {/* Modal body: contains the form or other content */}
-        <div style={{ padding: '20px' }}>
-          {children}
+        <div className="p-6 bg-white">
+          <div className="bg-white p-6 rounded-lg border border-gray-300 shadow-sm">
+            {children}
+          </div>
         </div>
       </div>
     </div>

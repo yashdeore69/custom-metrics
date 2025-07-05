@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import MetricForm from '../components/MetricForm';
 import Modal from '../components/common/Modal';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 // MetricsPage: Fetches and displays a list of metrics from the backend API
 // Now includes edit functionality with modal overlay for editing existing metrics
@@ -123,49 +126,80 @@ const MetricsPage = () => {
 
   // Render the MetricForm and the list of metrics as Card components
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Metrics</h1>
-      {/* MetricForm for adding new metrics; refreshes list on add */}
-      <MetricForm
-        onMetricAdded={handleMetricAdded}
-        onMetricAddError={handleMetricAddError}
-        success={formSuccess}
-        error={formError}
-      />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-        {/* Map each metric to a Card */}
-        {metrics.map((metric) => (
-          <div
-            key={metric._id}
-            className="p-4 m-2 shadow-md rounded-lg bg-white flex flex-col"
-          >
-            {/* Metric name in bold */}
-            <span className="font-bold text-lg mb-2">{metric.name}</span>
-            {/* calculationType as a badge */}
-            <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full w-max mb-2">
-              {metric.calculationType}
-            </span>
-            {/* Optionally show description and formula for context */}
-            {metric.description && (
-              <p className="text-gray-600 text-sm mb-1">{metric.description}</p>
-            )}
-            <p className="text-gray-400 text-xs">Formula: {metric.formula}</p>
-            
-            {/* Edit button: opens modal with metric data */}
-            <button
-              onClick={() => {
-                handleEditClick(metric);
-              }}
-              className="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition self-start"
-              aria-label={`Edit ${metric.name}`}
-            >
-              Edit
-            </button>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Form Section - Centered like a login form */}
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="text-center">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Metrics Dashboard</h1>
+            <p className="text-gray-600">Add and manage your custom metrics</p>
           </div>
-        ))}
+          <MetricForm
+            onMetricAdded={handleMetricAdded}
+            onMetricAddError={handleMetricAddError}
+            success={formSuccess}
+            error={formError}
+          />
+        </div>
       </div>
 
-      {/* Edit Modal: displays MetricForm in edit mode */}
+      {/* Cards Section - Below the form */}
+      {metrics.length > 0 && (
+        <div className="px-4 pb-12">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-8 text-center">
+              Your Metrics ({metrics.length})
+            </h2>
+            {/* 3 columns grid, centered */}
+            <div className="flex justify-center">
+              <div className="grid grid-cols-3 gap-6 max-w-5xl">
+                {metrics.map((metric) => (
+                  <Card key={metric._id} className="shadow-lg border border-gray-200 bg-white hover:shadow-xl transition-shadow duration-200">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-lg text-gray-900 truncate mb-2">
+                            {metric.name}
+                          </h3>
+                          <Badge variant="secondary" className="text-xs">
+                            {metric.calculationType}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      {metric.description && (
+                        <p className="text-gray-600 text-sm mb-3 leading-relaxed">
+                          {metric.description}
+                        </p>
+                      )}
+                      <div className="bg-gray-50 rounded-md p-3 mb-4">
+                        <p className="text-gray-500 text-xs font-medium mb-1">Formula</p>
+                        <p className="text-gray-700 text-sm font-mono">{metric.formula}</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditClick(metric)}
+                        aria-label={`Edit ${metric.name}`}
+                        className="w-full"
+                      >
+                        Edit Metric
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+                {/* Fill empty spaces to maintain 3-column layout */}
+                {Array.from({ length: (3 - (metrics.length % 3)) % 3 }).map((_, i) => (
+                  <div key={`empty-${i}`} className="h-0"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
       <Modal
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}

@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 // MetricForm.jsx
 // This form lets users add a new metric or edit an existing one.
-// It uses Tailwind CSS utility classes for a clean, modern look.
-// Layout: Each field is stacked vertically with consistent spacing (using 'space-y-4').
-// Styling: Labels are bold for clarity. Inputs use 'border', 'rounded', and 'p-2' for accessibility and aesthetics.
+// It uses shadcn/ui components for a modern, accessible look.
 // Comments throughout explain structure and styling for beginners.
 const MetricForm = ({ 
   onMetricAdded, 
   onMetricAddError, 
   onMetricUpdated, 
   onMetricUpdateError,
-  success, 
-  error,
   metric = null, // Metric data for edit mode
   isEdit = false // Flag to determine if we're editing or creating
 }) => {
@@ -32,6 +34,11 @@ const MetricForm = ({
       setDescription(metric.description || '');
       setCalculationType(metric.calculationType || 'count');
       setFormula(metric.formula || '');
+    } else if (!isEdit) {
+      setName('');
+      setDescription('');
+      setCalculationType('count');
+      setFormula('');
     }
   }, [isEdit, metric]);
 
@@ -39,14 +46,6 @@ const MetricForm = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Clear any previous errors
-    if (isEdit && onMetricUpdateError) {
-      onMetricUpdateError(null);
-    } else if (!isEdit && onMetricAddError) {
-      onMetricAddError(null);
-    }
-
     try {
       const metricData = {
         name,
@@ -54,7 +53,6 @@ const MetricForm = ({
         calculationType,
         formula,
       };
-
       if (isEdit && metric) {
         // Update existing metric using PUT
         await axios.put(
@@ -66,7 +64,7 @@ const MetricForm = ({
             },
           }
         );
-        // Notify parent of successful update
+        toast.success('Metric updated successfully!');
         if (onMetricUpdated) onMetricUpdated();
       } else {
         // Create new metric using POST
@@ -79,18 +77,17 @@ const MetricForm = ({
             },
           }
         );
-        // Clear the form only for new metrics
+        toast.success('Metric added successfully!');
         setName('');
         setDescription('');
         setCalculationType('count');
         setFormula('');
-        // Notify parent to refresh metrics and show success
         if (onMetricAdded) onMetricAdded();
       }
     } catch (err) {
       const errorMessage = err.response?.data?.message || 
         (isEdit ? 'Failed to update metric. Please try again.' : 'Failed to add metric. Please try again.');
-      
+      toast.error(errorMessage);
       if (isEdit && onMetricUpdateError) {
         onMetricUpdateError(errorMessage);
       } else if (!isEdit && onMetricAddError) {
@@ -102,87 +99,72 @@ const MetricForm = ({
   };
 
   return (
-    // The form uses Tailwind for background, padding, rounded corners, and shadow.
-    // 'space-y-4' adds vertical space between each child div (form field).
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto space-y-4">
+    // The form uses shadcn/ui components for a modern look.
+    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-lg w-full space-y-6 border-2 border-gray-300">
       {/* Name input: required field */}
-      <div>
-        {/* Label is bold and linked to input by htmlFor/id */}
-        <label htmlFor="name" className="block font-bold mb-1">Name</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="name">Name</Label>
+        <Input
           id="name"
           type="text"
-          className="border rounded p-2 w-full"
           value={name}
           onChange={e => setName(e.target.value)}
           required
+          placeholder="Enter metric name"
+          className="text-gray-900 placeholder:text-gray-500 bg-white"
         />
       </div>
-
-      {/* Description textarea: optional, allows up to 3 lines */}
-      <div>
-        <label htmlFor="description" className="block font-bold mb-1">Description</label>
-        <textarea
+      {/* Description textarea: optional */}
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
           id="description"
-          className="border rounded p-2 w-full"
           value={description}
           onChange={e => setDescription(e.target.value)}
           rows={3}
+          placeholder="Describe the metric (optional)"
+          className="min-h-[80px] resize-none text-gray-900 placeholder:text-gray-500 bg-white"
         />
       </div>
-
       {/* Calculation Type select: dropdown for metric type */}
-      <div>
-        <label htmlFor="calculationType" className="block font-bold mb-1">Calculation Type</label>
-        <select
-          id="calculationType"
-          className="border rounded p-2 w-full"
-          value={calculationType}
-          onChange={e => setCalculationType(e.target.value)}
-          required
-        >
-          <option value="count">Count</option>
-          <option value="percentage">Percentage</option>
-          <option value="time">Time</option>
-        </select>
+      <div className="space-y-2">
+        <Label htmlFor="calculationType">Calculation Type</Label>
+        <Select value={calculationType} onValueChange={setCalculationType}>
+          <SelectTrigger id="calculationType" className="w-full text-gray-900 placeholder:text-gray-500 bg-white">
+            <SelectValue placeholder="Select type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="count">Count</SelectItem>
+            <SelectItem value="percentage">Percentage</SelectItem>
+            <SelectItem value="time">Time</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
-
       {/* Formula input: required field for the metric's calculation formula */}
-      <div>
-        <label htmlFor="formula" className="block font-bold mb-1">Formula</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="formula">Formula</Label>
+        <Input
           id="formula"
           type="text"
-          className="border rounded p-2 w-full"
           value={formula}
           onChange={e => setFormula(e.target.value)}
           required
+          placeholder="e.g. X + Y"
+          className="text-gray-900 placeholder:text-gray-500 bg-white"
         />
       </div>
-
-      {/* Error message: shown if API returns an error */}
-      {error && (
-        <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-2">{error}</div>
-      )}
-      {/* Success message: shown if metric is added/updated successfully */}
-      {success && (
-        <div className="bg-green-100 text-green-700 px-4 py-2 rounded mb-2">
-          {isEdit ? 'Metric updated successfully!' : 'Metric added successfully!'}
-        </div>
-      )}
-
       {/* Submit button: disabled if loading or required fields are empty */}
-      <button
+      <Button
         type="submit"
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition disabled:opacity-50"
         disabled={loading || !name || !formula}
         aria-busy={loading}
+        className="w-full"
       >
         {loading 
           ? (isEdit ? 'Updating...' : 'Adding...') 
           : (isEdit ? 'Update Metric' : 'Add Metric')
         }
-      </button>
+      </Button>
     </form>
   );
 };
