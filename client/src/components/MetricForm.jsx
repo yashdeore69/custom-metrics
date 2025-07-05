@@ -1,12 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 // MetricForm.jsx
-// This form lets users add a new metric. It uses Tailwind CSS utility classes for a clean, modern look.
+// This form lets users add a new metric or edit an existing one.
+// It uses Tailwind CSS utility classes for a clean, modern look.
 // Layout: Each field is stacked vertically with consistent spacing (using 'space-y-4').
 // Styling: Labels are bold for clarity. Inputs use 'border', 'rounded', and 'p-2' for accessibility and aesthetics.
 // Comments throughout explain structure and styling for beginners.
-const MetricForm = ({ onMetricAdded, onMetricAddError, success, error }) => {
+const MetricForm = ({ 
+  onMetricAdded, 
+  onMetricAddError, 
+  onMetricUpdated, 
+  onMetricUpdateError,
+  success, 
+  error,
+  metric = null, // Metric data for edit mode
+  isEdit = false // Flag to determine if we're editing or creating
+}) => {
   // State for each input field
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -15,39 +25,76 @@ const MetricForm = ({ onMetricAdded, onMetricAddError, success, error }) => {
   // State for loading
   const [loading, setLoading] = useState(false);
 
+  // Populate form fields when editing an existing metric
+  useEffect(() => {
+    if (isEdit && metric) {
+      setName(metric.name || '');
+      setDescription(metric.description || '');
+      setCalculationType(metric.calculationType || 'count');
+      setFormula(metric.formula || '');
+    }
+  }, [isEdit, metric]);
+
   // Handler for form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    if (onMetricAddError) onMetricAddError(null);
+    
+    // Clear any previous errors
+    if (isEdit && onMetricUpdateError) {
+      onMetricUpdateError(null);
+    } else if (!isEdit && onMetricAddError) {
+      onMetricAddError(null);
+    }
+
     try {
-      // POST to the backend API with the required Authorization header
-      await axios.post(
-        '/api/metrics',
-        {
-          name,
-          description,
-          calculationType,
-          formula,
-        },
-        {
-          headers: {
-            'Authorization': 'Bearer CURSORPROTOTYPE',
-          },
-        }
-      );
-      // Clear the form
-      setName('');
-      setDescription('');
-      setCalculationType('count');
-      setFormula('');
-      // Notify parent to refresh metrics and show success
-      if (onMetricAdded) onMetricAdded();
-    } catch (err) {
-      if (onMetricAddError) {
-        onMetricAddError(
-          err.response?.data?.message || 'Failed to add metric. Please try again.'
+      const metricData = {
+        name,
+        description,
+        calculationType,
+        formula,
+      };
+
+      if (isEdit && metric) {
+        // Update existing metric using PUT
+        await axios.put(
+          `/api/metrics/${metric._id}`,
+          metricData,
+          {
+            headers: {
+              'Authorization': 'Bearer CURSORPROTOTYPE',
+            },
+          }
         );
+        // Notify parent of successful update
+        if (onMetricUpdated) onMetricUpdated();
+      } else {
+        // Create new metric using POST
+        await axios.post(
+          '/api/metrics',
+          metricData,
+          {
+            headers: {
+              'Authorization': 'Bearer CURSORPROTOTYPE',
+            },
+          }
+        );
+        // Clear the form only for new metrics
+        setName('');
+        setDescription('');
+        setCalculationType('count');
+        setFormula('');
+        // Notify parent to refresh metrics and show success
+        if (onMetricAdded) onMetricAdded();
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 
+        (isEdit ? 'Failed to update metric. Please try again.' : 'Failed to add metric. Please try again.');
+      
+      if (isEdit && onMetricUpdateError) {
+        onMetricUpdateError(errorMessage);
+      } else if (!isEdit && onMetricAddError) {
+        onMetricAddError(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -117,9 +164,11 @@ const MetricForm = ({ onMetricAdded, onMetricAddError, success, error }) => {
       {error && (
         <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-2">{error}</div>
       )}
-      {/* Success message: shown if metric is added successfully */}
+      {/* Success message: shown if metric is added/updated successfully */}
       {success && (
-        <div className="bg-green-100 text-green-700 px-4 py-2 rounded mb-2">Metric added successfully!</div>
+        <div className="bg-green-100 text-green-700 px-4 py-2 rounded mb-2">
+          {isEdit ? 'Metric updated successfully!' : 'Metric added successfully!'}
+        </div>
       )}
 
       {/* Submit button: disabled if loading or required fields are empty */}
@@ -129,7 +178,10 @@ const MetricForm = ({ onMetricAdded, onMetricAddError, success, error }) => {
         disabled={loading || !name || !formula}
         aria-busy={loading}
       >
-        {loading ? 'Adding...' : 'Add Metric'}
+        {loading 
+          ? (isEdit ? 'Updating...' : 'Adding...') 
+          : (isEdit ? 'Update Metric' : 'Add Metric')
+        }
       </button>
     </form>
   );

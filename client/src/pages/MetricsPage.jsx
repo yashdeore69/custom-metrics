@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import MetricForm from '../components/MetricForm';
+import Modal from '../components/common/Modal';
 
 // MetricsPage: Fetches and displays a list of metrics from the backend API
+// Now includes edit functionality with modal overlay for editing existing metrics
 const MetricsPage = () => {
   // State to hold the list of metrics
   const [metrics, setMetrics] = useState([]);
@@ -10,9 +12,15 @@ const MetricsPage = () => {
   const [loading, setLoading] = useState(true);
   // State to track error status
   const [error, setError] = useState(null);
-  // State for MetricForm feedback
+  // State for MetricForm feedback (add new metrics)
   const [formSuccess, setFormSuccess] = useState(false);
   const [formError, setFormError] = useState(null);
+  // State for edit modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingMetric, setEditingMetric] = useState(null);
+  // State for edit form feedback
+  const [editSuccess, setEditSuccess] = useState(false);
+  const [editError, setEditError] = useState(null);
 
   // Function to fetch metrics from the backend API
   const fetchMetrics = () => {
@@ -48,6 +56,40 @@ const MetricsPage = () => {
     setFormError(msg);
     setFormSuccess(false);
     setTimeout(() => setFormError(null), 2000);
+  };
+
+  // Handler for opening edit modal
+  const handleEditClick = (metric) => {
+    setEditingMetric(metric);
+    setIsEditModalOpen(true);
+    setEditSuccess(false);
+    setEditError(null);
+  };
+
+  // Handler for closing edit modal
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingMetric(null);
+    setEditSuccess(false);
+    setEditError(null);
+  };
+
+  // Handler for successful metric update
+  const handleMetricUpdated = () => {
+    setEditSuccess(true);
+    setEditError(null);
+    fetchMetrics();
+    // Close modal after a short delay to show success message
+    setTimeout(() => {
+      handleCloseEditModal();
+    }, 1500);
+  };
+
+  // Handler for metric update error
+  const handleMetricUpdateError = (msg) => {
+    setEditError(msg);
+    setEditSuccess(false);
+    setTimeout(() => setEditError(null), 3000);
   };
 
   // Show a loading spinner while fetching data
@@ -108,9 +150,36 @@ const MetricsPage = () => {
               <p className="text-gray-600 text-sm mb-1">{metric.description}</p>
             )}
             <p className="text-gray-400 text-xs">Formula: {metric.formula}</p>
+            
+            {/* Edit button: opens modal with metric data */}
+            <button
+              onClick={() => {
+                handleEditClick(metric);
+              }}
+              className="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition self-start"
+              aria-label={`Edit ${metric.name}`}
+            >
+              Edit
+            </button>
           </div>
         ))}
       </div>
+
+      {/* Edit Modal: displays MetricForm in edit mode */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        title="Edit Metric"
+      >
+        <MetricForm
+          metric={editingMetric}
+          isEdit={true}
+          onMetricUpdated={handleMetricUpdated}
+          onMetricUpdateError={handleMetricUpdateError}
+          success={editSuccess}
+          error={editError}
+        />
+      </Modal>
     </div>
   );
 };
